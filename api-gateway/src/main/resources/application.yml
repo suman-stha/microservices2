@@ -1,0 +1,63 @@
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+server:
+  port: 8989
+spring:
+
+  application:
+    name: Api-Gateway
+
+  cloud:
+    gateway:
+      routes:
+        - id: Order-Service
+          uri: lb://Order-Service
+          predicates:
+            - Path=/order/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: Order-Service
+                fallbackuri: forward:/orderFallBack
+        - id: Payment-Service
+          uri: lb://Payment-Service
+          predicates:
+            - Path=/payment/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: Payment-Service
+                fallbackuri: forward:/paymentFallBack
+#  - id: user-service
+#      uri: lb://user-service
+#      predicates:
+#        - Path=/user/**
+#
+#
+#      filters:
+#        - name: CircuitBreaker
+#          args:
+#            name: user-service
+#            fallbackuri: forward:/userServiceFallback
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.stream
+    health:
+      show-details: always
